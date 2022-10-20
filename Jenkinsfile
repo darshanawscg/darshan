@@ -1,26 +1,29 @@
-pipeline {
+pipeline{
     agent any
     environment {
-        PATH = "/opt/apache-maven-3.6.3/bin:$PATH"
+        PATH = "$PATH:/opt/apache-maven-3.8.2/bin"
     }
-    stages {
-        stage("clone code"){
+    stages{
+       stage('GetCode'){
             steps{
-               git credentialsId: 'git_credentials', url: 'https://github.com/ravdy/hello-world.git'
+                git 'https://github.com/ravdy/javaloginapp.git'
             }
-        }
-        stage("build code"){
+         }        
+       stage('Build'){
             steps{
-              sh "mvn clean install"
+                sh 'mvn clean package'
             }
+         }
+        stage('SonarQube analysis') {
+//    def scannerHome = tool 'SonarScanner 4.0';
+        steps{
+        withSonarQubeEnv('sonarqube-8.9') { 
+        // If you have configured more than one global server connection, you can specify its name
+//      sh "${scannerHome}/bin/sonar-scanner"
+        sh "mvn sonar:sonar"
+    }
         }
-        stage("deploy"){
-            steps{
-              sshagent(['deploy_user']) {
-                 sh "scp -o StrictHostKeyChecking=no webapp/target/webapp.war ec2-user@13.229.183.126:/opt/apache-tomcat-8.5.55/webapps"
-                 
-                }
-            }
         }
+       
     }
 }
